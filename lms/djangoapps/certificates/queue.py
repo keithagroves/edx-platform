@@ -291,8 +291,13 @@ class XQueueCertInterface(object):
         mode_is_verified = enrollment_mode in GeneratedCertificate.VERIFIED_CERTS_MODES
         user_is_verified = IDVerificationService.user_is_verified(student)
         cert_mode = enrollment_mode
-        is_eligible_for_certificate = enrollment_mode != CourseMode.AUDIT if is_whitelisted else \
-            CourseMode.is_eligible_for_certificate(enrollment_mode, cert_status)
+
+        is_eligible_for_certificate = CourseMode.is_eligible_for_certificate(enrollment_mode, cert_status)
+        if is_whitelisted and not is_eligible_for_certificate:
+            # check if audit certificates are enabled for audit mode
+            is_eligible_for_certificate = True if enrollment_mode != CourseMode.AUDIT else \
+                not settings.FEATURES['DISABLE_AUDIT_CERTIFICATES']
+
         unverified = False
         # For credit mode generate verified certificate
         if cert_mode in (CourseMode.CREDIT_MODE, CourseMode.MASTERS):
